@@ -21,26 +21,6 @@
 </template>
 
 <script>
-//
-const context = require.context("./components", true, /\.vue$/);
-const moduleStores = {};
-context.keys().forEach(key => {
-  console.log(key);
-  const fileName = key.split(".")[1].split("/")[2];
-  const fileModule = context(key).default;
-  moduleStores[fileName] = {
-    ...fileModule,
-    namespaced: true
-  };
-});
-console.log(moduleStores);
-// const modules = context.keys().reduce((modules, modulePath) => {
-//   console.log(modulePath)
-// 	const value = context(modulePath)
-// 	modules = modules.concat(value.default)
-// 	return modules
-// }, [])
-// console.log(modules)
 const SIZE = 10 * 1024 * 1024; // 切片大小
 export default {
   name: "Home",
