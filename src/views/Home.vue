@@ -2,44 +2,24 @@
   <div class="home">
     <input type="file" @change="handleFileChange" />
     <el-button @click="handleUpload">Upload</el-button>
-    <br />
-    <el-select v-model="type" @change="handleTypeChange">
-      <el-option v-for="item in options" :key="item" :label="item" :value="item"></el-option>
-    </el-select>
-    <div>
-      <div v-if="type=='a'">
-        <A />
-      </div>
-      <div v-if="type=='b'">
-        <B />
-      </div>
-      <div v-if="type=='b2'">
-        <B2 />
-      </div>
-    </div>
+    <el-button @click="handleUpload2">Upload2</el-button>
   </div>
 </template>
 
 <script>
-const SIZE = 10 * 1024 * 1024; // 切片大小
+import { encode } from '@/utils'
+import axios from 'axios'
+// const SIZE = 10 * 1024 * 1024; // 切片大小
+const SIZE =  1024; // 切片大小
 export default {
   name: "Home",
-  components: moduleStores,
   data() {
     return {
-      type: null,
-      curNavComponents: null,
-      options: ["a", "b", "b2"],
-      container: {
-        file: null
-      },
+      file:null,
       data: []
     };
   },
   methods: {
-    handleTypeChange(val) {
-      console.log(val);
-    },
     request({ url, method = "post", data, headers = {}, requestList }) {
       return new Promise(resolve => {
         const xhr = new XMLHttpRequest();
@@ -58,8 +38,8 @@ export default {
     handleFileChange(e) {
       const [file] = e.target.files;
       if (!file) return;
-      this.container.file = file;
-      console.log(this.container.file);
+      this.file = file;
+      console.log(this.file);
     },
     //生成切片文件
     createFileChunk(file, size = SIZE) {
@@ -78,25 +58,31 @@ export default {
           const formData = new FormData();
           formData.append("chunk", chunk);
           formData.append("hash", hash);
-          formData.append("filename", this.container.file.name);
+          formData.append("filename", this.file.name);
           return { formData };
         })
         .map(async ({ formData }) => {
-          this.request({
-            url: "http://localhost:3000/post",
-            data: formData
-          });
+          axios.post('http://localhost:3000/files/v2',data)
         });
       await Promise.all(requestList); //并发切片
 
       await this.mergeRequest(); // 合并切片
     },
+    handleUpload2(){
+      if (!this.file) return;
+      let data = new FormData();
+      let hash = encode(JSON.stringify(this.file))
+      data.append('file',this.file)
+      data.append('hash',hash)
+      return axios.post('http://localhost:3000/files/v2',data)
+    },
     async handleUpload() {
-      if (!this.container.file) return;
-      const fileChunkList = this.createFileChunk(this.container.file);
+      if (!this.file) return;
+      let hash = encode(JSON.stringify(this.file))
+      const fileChunkList = this.createFileChunk(this.file);
       this.data = fileChunkList.map(({ file }, index) => ({
         chunk: file,
-        hash: this.container.file.name + "-" + index
+        hash: hash+ "-" + index
       }));
       await this.uploadChunks();
     },
@@ -105,7 +91,7 @@ export default {
         url: "http://localhost:3000/merge",
         headers: { "content-type": "application/json" },
         data: JSON.stringify({
-          filename: this.container.file.name,
+          filename: this.file.name,
           size: SIZE
         })
       });
