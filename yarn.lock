@@ -1545,6 +1545,11 @@ async-each@^1.0.1:
   resolved "https://registry.npm.taobao.org/async-each/download/async-each-1.0.3.tgz#b727dbf87d7651602f06f4d4ac387f47d91b0cbf"
   integrity sha1-tyfb+H12UWAvBvTUrDh/R9kbDL8=
 
+async-es@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npm.taobao.org/async-es/download/async-es-3.2.0.tgz#8837aa12f675de80fac56b94a4b4cef515343de3"
+  integrity sha1-iDeqEvZ13oD6xWuUpLTO9RU0PeM=
+
 async-foreach@^0.1.3:
   version "0.1.3"
   resolved "https://registry.npm.taobao.org/async-foreach/download/async-foreach-0.1.3.tgz#36121f845c0578172de419a97dbeb1d16ec34542"
@@ -1568,6 +1573,11 @@ async@^2.6.2:
   integrity sha1-1yYl4jRKNlbjo61Pp0n6gymdgv8=
   dependencies:
     lodash "^4.17.14"
+
+async@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npm.taobao.org/async/download/async-3.2.0.tgz#b3a2685c5ebb641d3de02d161002c60fc9f85720"
+  integrity sha1-s6JoXF67ZB094C0WEALGD8n4VyA=
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -6337,6 +6347,11 @@ promise-inflight@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npm.taobao.org/promise-inflight/download/promise-inflight-1.0.1.tgz#98472870bf228132fcbdd868129bad12c3c029e3"
   integrity sha1-mEcocL8igTL8vdhoEputEsPAKeM=
+
+promise-limit@^2.7.0:
+  version "2.7.0"
+  resolved "https://registry.npm.taobao.org/promise-limit/download/promise-limit-2.7.0.tgz#eb5737c33342a030eaeaecea9b3d3a93cb592b26"
+  integrity sha1-61c3wzNCoDDq6uzqmz06k8tZKyY=
 
 proxy-addr@~2.0.5:
   version "2.0.6"
