@@ -19,7 +19,10 @@ import { resolve } from "path";
 import { uploadSlice, mergeSlice } from "@/api/upload.js";
 import { source } from '@/api/index.js'
 const mapLimit = require("promise-map-limit");
-const SIZE = 2 * 1024 * 1024; // 切片大小 2M
+const mapSeries = require("promise-map-series");
+const async = require('async')
+const mapSerires = async.mapSerires;
+const SIZE = 50 * 1024 * 1024; // 切片大小 2M
 // const SIZE =  1024; // 切片大小
 
 const CancelToken = axios.CancelToken;
@@ -91,16 +94,16 @@ export default {
           formData.append("filename", this.file.name);
           formData.append("current", index);
           formData.append("total", total);
-          let base64 = await this.readerFile(chunk);
-          console.log(base64)
-          formData.append("base64", base64);
+          // let base64 = await this.readerFile(chunk);
+          // console.log(base64)
+          // formData.append("base64", base64);
           return { formData, idx: index, total };
         }
       );
       let filename = this.file.name;
       // promise.all  并行但能限流  所以 引入异步流程控制的 async库 mapLimit并行 并限流
       console.log(requestList.length);
-      mapLimit(requestList, 3, async (i) => {
+      mapLimit(requestList, 1, async (i) => {
         let { formData, idx, total } = await i;
         let res = await uploadSlice(`${this.file.name}-${idx}`, formData,{ 
           cancelToken: new CancelToken(c => cancel = c)
@@ -139,18 +142,18 @@ export default {
     async handleUpload2() {
       if (!this.file) return;
       let data = new FormData();
-      this.hash = encode(JSON.stringify(this.file));
-      let reader = new FileReader();
-      reader.readAsDataURL(this.file);
-      reader.onload = async () => {
-        this.hash = reader.result;
-      };
+      // this.hash = encode(JSON.stringify(this.file));
+      // let reader = new FileReader();
+      // reader.readAsDataURL(this.file);
+      // reader.onload = async () => {
+      //   this.hash = reader.result;
+      // };
 
       //:TODO 上传切片前 提交 文件base64 看是否已经传过文件
       const fileChunkList = this.createFileChunk(this.file);
       this.data = fileChunkList.map(({ file }, index) => ({
         chunk: file,
-        hash: this.hash + "-" + index,
+        // hash: this.hash + "-" + index,
         total: fileChunkList.length,
         index,
       }));
@@ -161,11 +164,11 @@ export default {
     },
     async handleUpload() {
       if (!this.file) return;
-      let hash = encode(JSON.stringify(this.file));
+      // let hash = encode(JSON.stringify(this.file));
       const fileChunkList = this.createFileChunk(this.file);
       this.data = fileChunkList.map(({ file }, index, end) => ({
         chunk: file,
-        hash: hash + "-" + index,
+        // hash: hash + "-" + index,
         end,
       }));
       await this.uploadChunks();
