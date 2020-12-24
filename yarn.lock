@@ -6353,6 +6353,11 @@ promise-limit@^2.7.0:
   resolved "https://registry.npm.taobao.org/promise-limit/download/promise-limit-2.7.0.tgz#eb5737c33342a030eaeaecea9b3d3a93cb592b26"
   integrity sha1-61c3wzNCoDDq6uzqmz06k8tZKyY=
 
+promise-map-limit@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npm.taobao.org/promise-map-limit/download/promise-map-limit-1.0.0.tgz#ee8e7f306e1547b0a0ec59f881d4e990f6506d64"
+  integrity sha1-7o5/MG4VR7Cg7Fn4gdTpkPZQbWQ=
+
 proxy-addr@~2.0.5:
   version "2.0.6"
   resolved "https://registry.npm.taobao.org/proxy-addr/download/proxy-addr-2.0.6.tgz#fdc2336505447d3f2f2c638ed272caf614bbb2bf"

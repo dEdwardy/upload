@@ -3,6 +3,8 @@
     <input type="file" @change="handleFileChange" />
     <el-button @click="handleUpload">Upload</el-button>
     <el-button @click="handleUpload2">Upload2</el-button>
+    <el-button @click="handleStop">Stop</el-button>
+    <el-progress :percentage="progress"></el-progress>
   </div>
 </template>
 
@@ -12,10 +14,16 @@ import { encode } from "@/utils";
 import axios from "axios";
 import { read } from "fs";
 import promiseLimit from "promise-limit";
-// import async from "async";
-const async = require("async");
-const SIZE = 10 * 1024 * 1024; // 切片大小
+// import { series, parallelLimit } from "async-es";
+import { resolve } from "path";
+import { uploadSlice, mergeSlice } from "@/api/upload.js";
+import { source } from '@/api/index.js'
+const mapLimit = require("promise-map-limit");
+const SIZE = 2 * 1024 * 1024; // 切片大小 2M
 // const SIZE =  1024; // 切片大小
+
+const CancelToken = axios.CancelToken;
+let cancel;
 export default {
   name: "Home",
   data() {
@@ -23,21 +31,22 @@ export default {
       file: null,
       data: [],
       hash: "",
-      tasks: []
+      tasks: [],
+      progress: 0,
     };
   },
   methods: {
     request({ url, method = "post", data, headers = {}, requestList }) {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
         xhr.open(method, url);
-        Object.keys(headers).forEach(key =>
+        Object.keys(headers).forEach((key) =>
           xhr.setRequestHeader(key, headers[key])
         );
         xhr.send(data);
-        xhr.onload = e => {
+        xhr.onload = (e) => {
           resolve({
-            data: e.target.response
+            data: e.target.response,
           });
         };
       });
@@ -55,104 +64,100 @@ export default {
       while (file.size > cur) {
         fileChunkList.push({
           file: file.slice(cur, cur + size),
-          cur
+          cur,
         });
         cur += size;
       }
       return fileChunkList;
     },
+    readerFile(file) {
+      return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          resolve(e.target.result);
+        };
+        reader.onerror = (err) => {
+          reject(err);
+        };
+      });
+    },
     //上传切片文件
     async uploadChunks() {
-      const requestList = this.data
-        .map(({ chunk, hash, total, index }) => {
-          const formData = new FormData(); 
-          let reader = new FileReader()
-          read.on()
+      const requestList = this.data.map(
+        async ({ chunk, hash, total, index }) => {
+          const formData = new FormData();
           formData.append("file", chunk);
-          // formData.append("hash", hash);
           formData.append("filename", this.file.name);
           formData.append("current", index);
           formData.append("total", total);
-          return { formData };
-        })
-        .map(({ formData }, idx) => {
-          return { formData, idx };
-          // return async () =>  {
-          //   console.warn(idx)
-          //   return await axios.post(
-          //   `http://localhost:3000/files/p1/${this.file.name}-${idx}`,
-          //   formData
-          // ).then(res => console.log(res)).catch(e => console.warn(e))
-          // }
-        });
-      let total = requestList.length;
+          let base64 = await this.readerFile(chunk);
+          console.log(base64)
+          formData.append("base64", base64);
+          return { formData, idx: index, total };
+        }
+      );
       let filename = this.file.name;
-      console.log(requestList);
-      requestList.forEach(async ({ formData, idx }) => { 
-        console.log(idx)
-         await axios
-          .post(
-            `http://localhost:3000/files/p1/${this.file.name}-${idx}`,
-            formData
-          )
-      });
-      // let q = async.queue(( cb) => {
-      //   console.log(cb)
-      //   cb();
-      // }, 6);
-      // q.drain(() => {
-      //   console.log("切片上传完毕");
-      //   return axios.post("http://localhost:3000/files/p1-merge", {
-      //     filename,
-      //     total
-      //   });
-      // });
-      // requestList.map( i=> q.push(i))
-
-      // Promise.all(requestList)
-      //   .then(res => {
-      //     // console.log(res)
-      //     let filename = this.file.name;
-      //     return axios.post("http://localhost:3000/files/p1-merge", {
-      //       filename,
-      //       total
-      //     });
-      //     console.timeEnd("promise");
-      //     //全部上传完毕
-      //     // axios.post("http://localhost:3000/files/p1/"+)
-      //   })
-      //   .catch(err => {
-      //     //至少有一个切片上传失败
-      //     console.warn(err);
-      //   });
-
-      // await this.mergeRequest(); // 合并切片
+      // promise.all  并行但能限流  所以 引入异步流程控制的 async库 mapLimit并行 并限流
+      console.log(requestList.length);
+      mapLimit(requestList, 3, async (i) => {
+        let { formData, idx, total } = await i;
+        let res = await uploadSlice(`${this.file.name}-${idx}`, formData,{ 
+          cancelToken: new CancelToken(c => cancel = c)
+        });
+        let current = parseInt(res.data.data.current, 10) + 1;
+        let progress = (current / total) * 100;
+        if (progress > this.progress) {
+          console.warn(progress);
+          this.progress = progress;
+        }
+      })
+        .then(() => {
+         let filename = this.file.name;
+          mergeSlice({
+            filename,
+            total: requestList.length,
+          },{ cancelToken: new CancelToken(c => cancel = c)}).then(res => {
+             this.$message({
+               message:'Success',
+               type:'success'
+             })
+          }).catch(e => {
+             this.$message({
+              message:'Fail',
+               type:'error'
+             })
+          })
+        })
+        .catch((e) => console.log(e));
+    },
+    handleStop(){
+      if (!this.file) return;
+      // source.cancel('Operation canceled by the user.');
+      cancel('sssss')
     },
     async handleUpload2() {
       if (!this.file) return;
       let data = new FormData();
-      // this.hash = encode(JSON.stringify(this.file));
+      this.hash = encode(JSON.stringify(this.file));
       let reader = new FileReader();
       reader.readAsDataURL(this.file);
       reader.onload = async () => {
-        console.warn(this);
         this.hash = reader.result;
-        const fileChunkList = this.createFileChunk(this.file);
-        this.data = fileChunkList.map(({ file }, index) => ({
-          chunk: file,
-          hash: this.hash + "-" + index,
-          total: fileChunkList.length,
-          index
-        }));
-        await this.uploadChunks();
       };
+
+      //:TODO 上传切片前 提交 文件base64 看是否已经传过文件
+      const fileChunkList = this.createFileChunk(this.file);
+      this.data = fileChunkList.map(({ file }, index) => ({
+        chunk: file,
+        hash: this.hash + "-" + index,
+        total: fileChunkList.length,
+        index,
+      }));
+      await this.uploadChunks();
 
       // data.append('file',this.file)
       // data.append('hash',hash)
-      // let filename =  this.file.name
-      // return axios.post('http://localhost:3000/files/p1/merge',{
-      //   filename
-      // })
     },
     async handleUpload() {
       if (!this.file) return;
@@ -161,24 +166,10 @@ export default {
       this.data = fileChunkList.map(({ file }, index, end) => ({
         chunk: file,
         hash: hash + "-" + index,
-        end
+        end,
       }));
       await this.uploadChunks();
     },
-    mergeRequest() {
-      let hash = this.hash;
-      return axios.post("http://localhost:3000/files/merge", {
-        hash
-      });
-      // await this.request({
-      //   url: "http://localhost:3000/merge",
-      //   headers: { "content-type": "application/json" },
-      //   data: JSON.stringify({
-      //     filename: this.file.name,
-      //     size: SIZE
-      //   })
-      // });
-    }
-  }
+  },
 };
 </script>
