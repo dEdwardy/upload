@@ -4,6 +4,7 @@
     <el-button @click="handleUpload">Upload</el-button>
     <el-button @click="handleUpload2">Upload2</el-button>
     <el-button @click="handleStop">Stop</el-button>
+    <el-button @click="handleHash">ComputeHash</el-button>
     <el-progress :percentage="progress"></el-progress>
   </div>
 </template>
@@ -17,14 +18,15 @@ import promiseLimit from "promise-limit";
 // import { series, parallelLimit } from "async-es";
 import { resolve } from "path";
 import { uploadSlice, mergeSlice } from "@/api/upload.js";
-import { source } from '@/api/index.js'
+import { source } from "@/api/index.js";
 const mapLimit = require("promise-map-limit");
 const mapSeries = require("promise-map-series");
-const async = require('async')
+const SparkMD5 = require("spark-md5");
+const async = require("async");
 const mapSerires = async.mapSerires;
-const SIZE = 50 * 1024 * 1024; // 切片大小 2M
+const SIZE = 2 * 1024 * 1024; // 切片大小 2M
 // const SIZE =  1024; // 切片大小
-
+import Worker from "../worker/hash.worker";
 const CancelToken = axios.CancelToken;
 let cancel;
 export default {
@@ -73,10 +75,20 @@ export default {
       }
       return fileChunkList;
     },
-    readerFile(file) {
+    /**
+     * file :Blob
+     */
+    readFile(file,type = 'dataurl') {
       return new Promise((resolve, reject) => {
         let reader = new FileReader();
-        reader.readAsDataURL(file);
+        if(type == 'dataurl'){
+          reader.readAsDataURL(file);
+        }else if(type == 'binarystring'){
+          reader.readAsBinaryString(file)
+        } else {
+           reader.readAsDataURL(file);
+        }
+        
         reader.onload = (e) => {
           resolve(e.target.result);
         };
@@ -94,7 +106,7 @@ export default {
           formData.append("filename", this.file.name);
           formData.append("current", index);
           formData.append("total", total);
-          // let base64 = await this.readerFile(chunk);
+          // let base64 = await this.readFile(chunk);
           // console.log(base64)
           // formData.append("base64", base64);
           return { formData, idx: index, total };
@@ -103,41 +115,80 @@ export default {
       let filename = this.file.name;
       // promise.all  并行但能限流  所以 引入异步流程控制的 async库 mapLimit并行 并限流
       console.log(requestList.length);
-      mapLimit(requestList, 1, async (i) => {
+      mapLimit(requestList, 6, async (i) => {
         let { formData, idx, total } = await i;
-        let res = await uploadSlice(`${this.file.name}-${idx}`, formData,{ 
-          cancelToken: new CancelToken(c => cancel = c)
+        let res = await uploadSlice(`${this.file.name}-${idx}`, formData, {
+          cancelToken: new CancelToken((c) => (cancel = c)),
         });
         let current = parseInt(res.data.data.current, 10) + 1;
-        let progress = (current / total) * 100;
+        let progress = ((current / total) * 100).toFixed(2);
         if (progress > this.progress) {
           console.warn(progress);
           this.progress = progress;
         }
       })
         .then(() => {
-         let filename = this.file.name;
-          mergeSlice({
-            filename,
-            total: requestList.length,
-          },{ cancelToken: new CancelToken(c => cancel = c)}).then(res => {
-             this.$message({
-               message:'Success',
-               type:'success'
-             })
-          }).catch(e => {
-             this.$message({
-              message:'Fail',
-               type:'error'
-             })
-          })
+          let filename = this.file.name;
+          mergeSlice(
+            {
+              filename,
+              total: requestList.length,
+            },
+            { cancelToken: new CancelToken((c) => (cancel = c)) }
+          )
+            .then((res) => {
+              this.$message({
+                message: "Success",
+                type: "success",
+              });
+            })
+            .catch((e) => {
+              this.$message({
+                message: "Fail",
+                type: "error",
+              });
+            });
         })
         .catch((e) => console.log(e));
     },
-    handleStop(){
+    handleStop() {
       if (!this.file) return;
       // source.cancel('Operation canceled by the user.');
-      cancel('sssss')
+      cancel("sssss");
+    },
+    handleHash() {
+      let file = this.file;
+      if (!file) return;
+      //大文件 依旧切片  生成md5
+      const slices = this.createFileChunk(file);
+      let worker = new Worker()
+      // let arr = slices.map(({file}) => {
+
+      // })
+      mapLimit(slices,1, async({file}) => {
+        let binary = await this.readFile(file,'binarystring');
+        worker.postMessage(['slice',binary])
+      }).then(() => {
+        worker.postMessage('merge')
+      })
+
+      //  小文件直接 md5 不用 分片
+      //  let reader = new FileReader();
+      //  reader.onload = (e) => {
+      //   console.log("读取文件");
+      //   let binary = e.target.result;
+      //   let worker = new Worker();
+      //   worker.postMessage(['hash',binary])
+      //   worker.onmessage = e => {
+      //     console.log(e)
+      //   }
+      // };
+
+      // reader.readAsBinaryString(file)
+      // reader.onerror = err => {
+      //   console.error('文件读取失败')
+      //   console.log(err)
+      // }
     },
     async handleUpload2() {
       if (!this.file) return;
@@ -157,6 +208,7 @@ export default {
         total: fileChunkList.length,
         index,
       }));
+      return;
       await this.uploadChunks();
 
       // data.append('file',this.file)
