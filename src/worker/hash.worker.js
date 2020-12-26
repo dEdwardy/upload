@@ -1,4 +1,5 @@
 import SparkMD5 from 'spark-md5'
+let spark;
 self.onmessage = e => {
     console.log('recieve message from main thread')
     let { data } = e;
@@ -8,20 +9,27 @@ self.onmessage = e => {
         let md5 = SparkMD5.hashBinary(buffer)
         self.postMessage(md5)
     } else {
-        let spark = new SparkMD5()
-        //大文件 计算切片hash
+        // :TODO大文件 计算切片hash (还有点问题)
+        if(type == 'init') {
+            console.warn('init --------------------------')
+            spark = new SparkMD5();
+        }
         if (type == 'slice') {
-            console.log('slice')
-            console.log(buffer)
-            self.spark.append(buffer)
+            console.warn(`slice -----------------------${current}`)
+            // console.log('slice')
+            console.warn(`before--------------------`)
+            console.warn(spark)
+            spark.append(buffer)
+            console.warn(`after--------------------`)
+            console.log(spark)
             self.postMessage([current,total])
         }
         if(type == 'merge'){
-            console.log('merge')
-            self.spark.end()
-            self.postMessage(self.spark)
-            self.spark = null
+            console.warn(`merge ---------------------------`)
+            // console.log('merge')
+            let res = spark.end()
+            self.postMessage([res])
+            spark = null;
         }
     }
-
 }

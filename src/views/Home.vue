@@ -37,25 +37,10 @@ export default {
       data: [],
       hash: "",
       tasks: [],
-      progress: 0,
+      progress: 0
     };
   },
   methods: {
-    request({ url, method = "post", data, headers = {}, requestList }) {
-      return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open(method, url);
-        Object.keys(headers).forEach((key) =>
-          xhr.setRequestHeader(key, headers[key])
-        );
-        xhr.send(data);
-        xhr.onload = (e) => {
-          resolve({
-            data: e.target.response,
-          });
-        };
-      });
-    },
     handleFileChange(e) {
       const [file] = e.target.files;
       if (!file) return;
@@ -70,6 +55,7 @@ export default {
         fileChunkList.push({
           file: file.slice(cur, cur + size),
           cur,
+          index: Math.floor(cur/size)
         });
         cur += size;
       }
@@ -78,21 +64,21 @@ export default {
     /**
      * file :Blob
      */
-    readFile(file,type = 'dataurl') {
+    readFile(file, type = "dataurl") {
       return new Promise((resolve, reject) => {
         let reader = new FileReader();
-        if(type == 'dataurl'){
+        if (type == "dataurl") {
           reader.readAsDataURL(file);
-        }else if(type == 'binarystring'){
-          reader.readAsBinaryString(file)
+        } else if (type == "binarystring") {
+          reader.readAsBinaryString(file);
         } else {
-           reader.readAsDataURL(file);
+          reader.readAsArrayBuffer(file);
         }
-        
-        reader.onload = (e) => {
+
+        reader.onload = e => {
           resolve(e.target.result);
         };
-        reader.onerror = (err) => {
+        reader.onerror = err => {
           reject(err);
         };
       });
@@ -115,10 +101,10 @@ export default {
       let filename = this.file.name;
       // promise.all  并行但能限流  所以 引入异步流程控制的 async库 mapLimit并行 并限流
       console.log(requestList.length);
-      mapLimit(requestList, 6, async (i) => {
+      mapLimit(requestList, 6, async i => {
         let { formData, idx, total } = await i;
         let res = await uploadSlice(`${this.file.name}-${idx}`, formData, {
-          cancelToken: new CancelToken((c) => (cancel = c)),
+          cancelToken: new CancelToken(c => (cancel = c))
         });
         let current = parseInt(res.data.data.current, 10) + 1;
         let progress = ((current / total) * 100).toFixed(2);
@@ -132,24 +118,24 @@ export default {
           mergeSlice(
             {
               filename,
-              total: requestList.length,
+              total: requestList.length
             },
-            { cancelToken: new CancelToken((c) => (cancel = c)) }
+            { cancelToken: new CancelToken(c => (cancel = c)) }
           )
-            .then((res) => {
+            .then(res => {
               this.$message({
                 message: "Success",
-                type: "success",
+                type: "success"
               });
             })
-            .catch((e) => {
+            .catch(e => {
               this.$message({
                 message: "Fail",
-                type: "error",
+                type: "error"
               });
             });
         })
-        .catch((e) => console.log(e));
+        .catch(e => console.log(e));
     },
     handleStop() {
       if (!this.file) return;
@@ -157,38 +143,50 @@ export default {
       cancel("sssss");
     },
     handleHash() {
-      let file = this.file;
+      return new Promise((resolve,reject) => {
+         let file = this.file;
       if (!file) return;
       //大文件 依旧切片  生成md5
-      const slices = this.createFileChunk(file);
-      let worker = new Worker()
-      // let arr = slices.map(({file}) => {
+      // const size = 20 * 1024 * 1024;
+      // const slices = this.createFileChunk(file, size);
+      // let worker = new Worker();
+      // // let arr = slices.map(({file}) => {
 
-      // })
-      mapLimit(slices,1, async({file}) => {
-        let binary = await this.readFile(file,'binarystring');
-        worker.postMessage(['slice',binary])
-      }).then(() => {
-        worker.postMessage('merge')
-      })
-
-      //  小文件直接 md5 不用 分片
-      //  let reader = new FileReader();
-      //  reader.onload = (e) => {
-      //   console.log("读取文件");
-      //   let binary = e.target.result;
-      //   let worker = new Worker();
-      //   worker.postMessage(['hash',binary])
-      //   worker.onmessage = e => {
-      //     console.log(e)
+      // // })
+      // worker.postMessage(['init'])
+      // mapLimit(slices, 1, async ({ file,index }) => {
+      //   let binary = await this.readFile(file, "binarystring");
+      //   worker.postMessage(["slice", binary,index,slices.length]);
+      // }).then(() => {
+      //   worker.postMessage(["merge"]);
+      // });
+      // worker.onmessage = ({ data }) => {
+      //   console.log(data);
+      //   if(data && data.length >1){
+      //     let [current,total] =  data;
+      //     console.warn(current,total)
+      //   }else{
+      //     console.log(data)
       //   }
       // };
 
-      // reader.readAsBinaryString(file)
-      // reader.onerror = err => {
-      //   console.error('文件读取失败')
-      //   console.log(err)
-      // }
+      //  小文件直接 md5 不用 分片
+       let reader = new FileReader();
+       reader.readAsBinaryString(file)
+       reader.onload = (e) => {
+        console.log("读取文件");
+        let worker = new Worker();
+        worker.postMessage(['hash',e.target.result])
+        worker.onmessage = ({data}) => {
+          //此处即为 web worker 返回的文件md5
+          console.log(data)
+          resolve(data)
+        }
+      };
+      reader.onerror = err => {
+        reject('文件读取失败')
+      }
+      })
     },
     async handleUpload2() {
       if (!this.file) return;
@@ -199,14 +197,16 @@ export default {
       // reader.onload = async () => {
       //   this.hash = reader.result;
       // };
+      // 计算文件md5
+      let md5 = await this.handleHash();
+      //:TODO 询问服务器是否已经上传过此文件 即 md5是否存在
 
-      //:TODO 上传切片前 提交 文件base64 看是否已经传过文件
       const fileChunkList = this.createFileChunk(this.file);
       this.data = fileChunkList.map(({ file }, index) => ({
         chunk: file,
         // hash: this.hash + "-" + index,
         total: fileChunkList.length,
-        index,
+        index
       }));
       return;
       await this.uploadChunks();
@@ -221,10 +221,10 @@ export default {
       this.data = fileChunkList.map(({ file }, index, end) => ({
         chunk: file,
         // hash: hash + "-" + index,
-        end,
+        end
       }));
       await this.uploadChunks();
-    },
-  },
+    }
+  }
 };
 </script>
