@@ -813,6 +813,15 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
+"@codekraft-studio/vue-record@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.npm.taobao.org/@codekraft-studio/vue-record/download/@codekraft-studio/vue-record-0.0.3.tgz#67bb5c4ee28934dd3d69c41270dfb661b2ee58bd"
+  integrity sha1-Z7tcTuKJNN09acQScN+2YbLuWL0=
+  dependencies:
+    startaudiocontext "^1.2.1"
+    tone "^13.8.25"
+    vue "^2.0"
+
 "@hapi/address@2.x.x":
   version "2.1.4"
   resolved "https://registry.npm.taobao.org/@hapi/address/download/@hapi/address-2.1.4.tgz#5d67ed43f3fd41a69d4b9ff7b56e7c0d1d0a81e5"
@@ -7329,6 +7338,11 @@ stackframe@^1.1.1:
   resolved "https://registry.npm.taobao.org/stackframe/download/stackframe-1.1.1.tgz#ffef0a3318b1b60c3b58564989aca5660729ec71"
   integrity sha1-/+8KMxixtgw7WFZJiaylZgcp7HE=
 
+startaudiocontext@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.npm.taobao.org/startaudiocontext/download/startaudiocontext-1.2.1.tgz#46d2cab5462c791180acc7223e3bbbc3272c8595"
+  integrity sha1-RtLKtUYseRGArMciPju7wycshZU=
+
 static-extend@^0.1.1:
   version "0.1.2"
   resolved "https://registry.npm.taobao.org/static-extend/download/static-extend-0.1.2.tgz#60809c39cbff55337226fd5e0b520f341f1fb5c6"
@@ -7738,6 +7752,11 @@ toidentifier@1.0.0:
   resolved "https://registry.npm.taobao.org/toidentifier/download/toidentifier-1.0.0.tgz#7e1be3470f1e77948bc43d94a3c8f4d7752ba553"
   integrity sha1-fhvjRw8ed5SLxD2Uo8j013UrpVM=
 
+tone@^13.8.25:
+  version "13.8.34"
+  resolved "https://registry.npm.taobao.org/tone/download/tone-13.8.34.tgz#fcc3286d173c53f0741bbfba8aa8fbf0c4ef66dc"
+  integrity sha1-/MMobRc8U/B0G7+6iqj78MTvZtw=
+
 toposort@^1.0.0:
   version "1.0.7"
   resolved "https://registry.npm.taobao.org/toposort/download/toposort-1.0.7.tgz#2e68442d9f64ec720b8cc89e6443ac6caa950029"
@@ -8090,6 +8109,11 @@ vue-template-es2015-compiler@^1.9.0:
   version "1.9.1"
   resolved "https://registry.npm.taobao.org/vue-template-es2015-compiler/download/vue-template-es2015-compiler-1.9.1.tgz#1ee3bc9a16ecbf5118be334bb15f9c46f82f5825"
   integrity sha1-HuO8mhbsv1EYvjNLsV+cRvgvWCU=
+
+vue@^2.0:
+  version "2.6.12"
+  resolved "https://registry.npm.taobao.org/vue/download/vue-2.6.12.tgz?cache=0&sync_timestamp=1609359756799&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fvue%2Fdownload%2Fvue-2.6.12.tgz#f5ebd4fa6bd2869403e29a896aed4904456c9123"
+  integrity sha1-9evU+mvShpQD4pqJau1JBEVskSM=
 
 vue@^2.6.11:
   version "2.6.11"
