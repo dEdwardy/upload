@@ -1,4 +1,5 @@
 module.exports = {
+  publicPath:'/upload',
   configureWebpack: (config) => {
     config.output.libraryExport = 'default'
     config.module.rules = [
