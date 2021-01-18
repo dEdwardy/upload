@@ -12,11 +12,11 @@
 
 <script>
 export default {
-  name: "visual",
-  data() {
+  name: 'visual',
+  data () {
     this.chartSettings = {
-      position: "china",
-      type: "map",
+      position: 'china',
+      type: 'map',
       geo: {
         label: {
           emphasis: {
@@ -33,26 +33,26 @@ export default {
         //     }
         //   }
       }
-    };
+    }
     this.visualMap = {
-      type: "piecewise",
+      type: 'piecewise',
       min: 200,
       max: 1000,
       realtime: false,
       calculable: true,
       inRange: {
         color: [
-          "#fee090",
-          "#fdae61",
-          "#f46d43",
-          "#d73027",
-          "#a50026"
+          '#fee090',
+          '#fdae61',
+          '#f46d43',
+          '#d73027',
+          '#a50026'
         ]
       }
-    };
+    }
     return {
       chartData: {
-        columns: ["lat", "lng", "人数"],
+        columns: ['lat', 'lng', '人数'],
         rows: [
           { lat: 115.892151, lng: 28.676493, 人数: 1000 },
           { lat: 117.000923, lng: 36.675807, 人数: 400 },
@@ -66,10 +66,10 @@ export default {
           { lat: 103.823557, lng: 36.058039, 人数: 500 }
         ]
       }
-    };
+    }
   },
   methods: {}
-};
+}
 </script>
 
 <style lang="scss" scoped>
