@@ -17,23 +17,12 @@
 </template>
 
 <script>
-// :TODO  PROMISE-LIMIT
-// import { encode } from '@/utils'
 import axios from 'axios'
-// import { read } from 'fs'
-// import promiseLimit from 'promise-limit'
-// import { series, parallelLimit } from "async-es";
-// import { resolve } from 'path'
 import { uploadSlice, mergeSlice, exist } from '@/api/upload.js'
-// import { source } from '@/api/index.js'
 import Worker from '../worker/hash.worker'
 const mapLimit = require('promise-map-limit')
-// const mapSeries = require('promise-map-series')
-// const SparkMD5 = require('spark-md5')
-// const async = require('async')
-// const mapSerires = async.mapSerires
 const SIZE = 2 * 1024 * 1024 // 切片大小 2M
-// const SIZE =  1024; // 切片大小
+const MAX_CON = 4 // promsie.all 并发限制数量
 const CancelToken = axios.CancelToken
 let cancel
 export default {
@@ -137,7 +126,7 @@ export default {
       // promise.all  并行但能限流  所以 引入异步流程控制的 async库 mapLimit并行 并限流
       console.log(requestList.length)
       const progressArr = []
-      mapLimit(requestList, 1, async (i) => {
+      mapLimit(requestList, MAX_CON, async (i) => {
         const { formData, idx, total } = await i
         const res = await uploadSlice(`${this.file.name}-${idx}`, formData, {
           cancelToken: new CancelToken((c) => (cancel = c))
@@ -152,11 +141,16 @@ export default {
         .then((res) => {
           console.log(res)
           const filename = this.file.name
-          const formData = new FormData()
-          formData.append('filename', filename)
-          formData.append('file', this.file)
-          formData.append('total', requestList.length)
-          mergeSlice(formData, {
+          // const formData = new FormData()
+          // formData.append('filename', filename)
+          // formData.append('file', this.file)
+          // formData.append('total', requestList.length)
+          const params = {
+            filename,
+            size: this.file.size,
+            total: requestList.length
+          }
+          mergeSlice(params, {
             cancelToken: new CancelToken((c) => (cancel = c))
           })
             .then((res) => {

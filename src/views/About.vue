@@ -1,6 +1,6 @@
 <template>
   <div class="about">
-    <vue-record-video
+    <!-- <vue-record-video
       :mode="recMode"
       @stream="onStream"
       @result="onResult"
@@ -19,7 +19,7 @@
       v-if="src2"
       :src="src2"
       controls="controls"
-    ></audio>
+    ></audio> -->
   </div>
 </template>
 <script>
@@ -33,22 +33,22 @@ export default {
     }
   },
   methods: {
-    onStream (stream) {
-      console.log(stream)
-    },
-    onResult (data) {
-      console.log('The blob data:', data)
-      this.src = window.URL.createObjectURL(data)
-      console.log('Downloadable audio', window.URL.createObjectURL(data))
-    },
-    onStream2 (stream) {
-      console.log(stream)
-    },
-    onResult2 (data) {
-      console.log('The blob data:', data)
-      this.src2 = window.URL.createObjectURL(data)
-      console.log('Downloadable audio', window.URL.createObjectURL(data))
-    }
+    // onStream (stream) {
+    //   console.log(stream)
+    // },
+    // onResult (data) {
+    //   console.log('The blob data:', data)
+    //   this.src = window.URL.createObjectURL(data)
+    //   console.log('Downloadable audio', window.URL.createObjectURL(data))
+    // },
+    // onStream2 (stream) {
+    //   console.log(stream)
+    // },
+    // onResult2 (data) {
+    //   console.log('The blob data:', data)
+    //   this.src2 = window.URL.createObjectURL(data)
+    //   console.log('Downloadable audio', window.URL.createObjectURL(data))
+    // }
   }
 }
 </script>
